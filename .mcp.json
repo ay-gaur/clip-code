@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "google-workspace": {
+      "command": "npx",
+      "args": ["-y", "google-workspace-mcp", "serve"],
+      "env": {
+        "GOOGLE_CREDENTIALS_FILE": "/Users/user/.google-mcp/credentials.json",
+        "GOOGLE_ACCOUNTS_FILE": "/Users/user/.google-mcp/accounts.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Acme — Case File</title>
+<style>
+  :root{
+    --desk:#AFA898;            /* filing-desk surface */
+    --manila:#EBDFC4; --manila-deep:#E2D3B1; --manila-edge:#CDBC94;
+    --paper:#FFFEFA; --paper-edge:#E7E0CE;
+    --ink:#262219; --ink2:#5F5847; --ink3:#8D8570;
+    --red:#B8402F; --green:#3E7D5C; --amber:#A9761F;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html{background:var(--desk)}
+  body{margin:0;background:var(--desk);color:var(--ink);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+  .page{max-width:900px;margin:0 auto;padding:30px 18px 80px}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* case header strip */
+  .case-strip{background:var(--ink);color:#F3EFE6;border-radius:8px;padding:14px 20px;
+    display:flex;flex-wrap:wrap;gap:6px 20px;align-items:baseline;box-shadow:0 2px 6px rgba(38,34,25,.28)}
+  .case-strip .t{font-size:16px;font-weight:750;letter-spacing:.12em}
+  .case-strip .d{font-size:13px;color:#C9C2B2}
+  .case-strip .stamp{margin-left:auto;font-family:var(--mono);font-size:12px;color:#C9C2B2}
+  .case-strip .stamp.warn{color:#E8C36A} .case-strip .stamp.bad{color:#EE8A78}
+
+  /* the priority slip */
+  .slip{background:var(--paper);border:1px solid var(--paper-edge);border-radius:3px;
+    box-shadow:0 3px 10px rgba(38,34,25,.18);padding:26px 30px 24px;margin:26px 6px 0;position:relative}
+  .slip .clip{position:absolute;top:-13px;left:34px;width:44px;height:26px;border:3px solid #97917F;
+    border-bottom:0;border-radius:12px 12px 0 0;opacity:.85}
+  .stamp-red{display:inline-block;color:var(--red);border:2.5px solid var(--red);border-radius:4px;
+    padding:3px 12px;font-weight:800;font-size:12.5px;letter-spacing:.22em;transform:rotate(-1.6deg);
+    text-transform:uppercase;margin-bottom:16px}
+  .slip h1{margin:0;font-size:clamp(19px,3vw,25px);line-height:1.42;font-weight:700;letter-spacing:-.005em}
+  .slip .why{margin-top:12px;font-size:15px;color:var(--ink2)}
+  .slip .queue{margin:18px 0 0;padding:14px 0 0;border-top:1px dashed var(--manila-edge)}
+  .slip .queue .qh{font-size:11.5px;font-weight:800;letter-spacing:.18em;color:var(--ink3);text-transform:uppercase;margin-bottom:8px}
+  .slip .queue li{list-style:none;padding:5px 0 5px 30px;position:relative;color:var(--ink2);font-size:14.5px}
+  .slip .queue li::before{content:"";position:absolute;left:2px;top:9px;width:13px;height:13px;
+    border:2px solid var(--ink3);border-radius:3px}
+
+  /* index cards (pulse) */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:12px;margin:22px 6px 8px}
+  .card{background:var(--paper);border:1px solid var(--paper-edge);border-radius:3px;
+    box-shadow:0 2px 5px rgba(38,34,25,.12);padding:12px 14px}
+  .card .k{font-size:10.5px;font-weight:800;letter-spacing:.16em;color:var(--ink3);text-transform:uppercase}
+  .card .v{font-size:23px;font-weight:750;margin-top:4px;letter-spacing:-.01em}
+  .card .v.bad{color:var(--red)} .card .v.warn{color:var(--amber)} .card .v.ok{color:var(--green)}
+  .card .s{font-size:12px;color:var(--ink3);margin-top:2px}
+
+  /* folders */
+  .folder{background:var(--manila);border:1px solid var(--manila-edge);border-radius:0 12px 12px 12px;
+    margin:52px 0 0;position:relative;box-shadow:0 3px 9px rgba(38,34,25,.2);padding:16px}
+  .folder .tab{position:absolute;top:-34px;left:0;height:34px;display:flex;align-items:center;
+    background:var(--manila);border:1px solid var(--manila-edge);border-bottom:0;border-radius:10px 10px 0 0;
+    padding:0 26px;font-size:13.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+  .folder.f2 .tab{left:12%} .folder.f3 .tab{left:26%} .folder.f4 .tab{left:40%}
+  @media (max-width:640px){.folder.f2 .tab,.folder.f3 .tab,.folder.f4 .tab{left:0}}
+  .folder .tab small{font-weight:600;color:var(--ink3);letter-spacing:.05em;text-transform:none;margin-left:12px;font-size:11.5px}
+  .sheet{background:var(--paper);border:1px solid var(--paper-edge);border-radius:2px;
+    box-shadow:0 1px 3px rgba(38,34,25,.1);padding:20px 24px}
+
+  /* lanes inside folder */
+  .lane{display:grid;grid-template-columns:44px 1.2fr 1fr 1.5fr;gap:8px 18px;align-items:start;
+    padding:16px 2px;border-bottom:1px solid #EFE9DA}
+  .lane:last-child{border-bottom:0;padding-bottom:6px}
+  .lane:first-child{padding-top:6px}
+  .rk{width:32px;height:32px;border-radius:50%;background:var(--manila-deep);color:var(--ink);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+  .lane.dim .rk{opacity:.55}
+  .lname{font-size:16.5px;font-weight:750}
+  .lcrew{font-size:12.5px;color:var(--ink3);margin-top:2px}
+  .sticker{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;
+    border-radius:999px;padding:3px 12px;border:1.5px solid}
+  .sticker.ok{color:var(--green);border-color:var(--green);background:#EFF5F0}
+  .sticker.warn{color:var(--amber);border-color:var(--amber);background:#F8F2E4}
+  .sticker.bad{color:var(--red);border-color:var(--red);background:#F9ECE9}
+  .ldist{font-size:13px;color:var(--ink2);margin-top:7px}
+  .ldist b{font-weight:750;color:var(--ink)}
+  .lnext{font-size:14.5px;color:var(--ink2)}
+  .lnext b{color:var(--ink);font-weight:650}
+  .lblock{font-size:12.5px;color:var(--red);margin-top:5px;font-weight:600}
+  .lane.dim .lname,.lane.dim .lnext{color:var(--ink3)}
+  .closed-note{margin-top:14px;background:var(--manila-deep);border-radius:6px;padding:10px 16px;
+    font-size:12.5px;color:var(--ink2);line-height:1.8}
+  .closed-note b{font-weight:750}
+
+  /* signals + gates grid */
+  .grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+  @media (max-width:720px){.grid2{grid-template-columns:1fr}}
+  h4.ph{margin:0 0 10px;font-size:11.5px;font-weight:800;letter-spacing:.18em;color:var(--ink3);text-transform:uppercase}
+  .sig{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid #EFE9DA;font-size:14.5px;align-items:baseline}
+  .sig:last-child{border-bottom:0}
+  .sig .w{font-size:12px;color:var(--ink3);min-width:44px;font-weight:600}
+  .sig .b{color:var(--ink2)} .sig .b b{color:var(--ink);font-weight:700}
+  .flag{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.12em;color:#fff;
+    background:var(--red);border-radius:3px;padding:2px 7px;margin-left:8px;vertical-align:1px}
+  .gate{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid #EFE9DA;align-items:baseline}
+  .gate:last-child{border-bottom:0}
+  .gate .t{min-width:74px;font-weight:800;font-size:15px;color:var(--amber)}
+  .gate .t.past{color:var(--ink3);font-weight:600}
+  .gate .g{font-size:14.5px;font-weight:700}
+  .gate .n{font-size:13px;color:var(--ink2);margin-top:2px}
+  .empty{font-size:13.5px;color:var(--ink3);font-style:italic;padding:8px 0}
+
+  /* record — ruled paper */
+  .ruled .sig{border-bottom:1px solid #E4EEF2}
+  .rec-what{color:var(--ink2);font-size:14px}
+
+  /* machine + commands */
+  .sysgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 26px}
+  @media (max-width:720px){.sysgrid{grid-template-columns:1fr}}
+  .sys{display:flex;gap:10px;padding:8px 0;font-size:13.5px;align-items:baseline;border-bottom:1px solid #EFE9DA}
+  .sys .state{min-width:76px;font-size:10.5px;font-weight:800;letter-spacing:.14em;border-radius:3px;
+    text-align:center;padding:2px 0;color:#fff}
+  .state.on{background:var(--green)} .state.ext{background:var(--amber)}
+  .state.off{background:#98917D} .state.err{background:var(--red)}
+  .sys .nm{font-weight:650} .sys .nt{color:var(--ink3);font-size:12.5px}
+  .cmds{display:grid;grid-template-columns:1fr 1fr;gap:6px 26px;margin-top:6px}
+  @media (max-width:720px){.cmds{grid-template-columns:1fr}}
+  .cmd{padding:8px 0;border-bottom:1px solid #EFE9DA;font-size:14px}
+  .cmd b{font-weight:750}
+  .cmd span{color:var(--ink3);font-size:13px}
+
+  .colophon{margin-top:34px;text-align:center;font-size:11.5px;letter-spacing:.16em;
+    text-transform:uppercase;color:#6E6754}
+  @media (max-width:720px){
+    .lane{grid-template-columns:44px 1fr}
+    .lane>.c3,.lane>.c4{grid-column:2}
+    .slip{padding:22px 20px}
+    .sheet{padding:16px 16px}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="case-strip">
+    <span class="t">ACME · CASE FILE</span>
+    <span class="d" id="caseno"></span>
+    <span class="stamp" id="stamp"></span>
+  </div>
+
+  <div class="slip">
+    <div class="clip" aria-hidden="true"></div>
+    <div class="stamp-red">Priority — do this first</div>
+    <h1 id="hero-action"></h1>
+    <div class="why" id="hero-why"></div>
+    <div class="queue"><div class="qh">Then, in order</div><ul id="queue" style="margin:0;padding:0"></ul></div>
+  </div>
+
+  <div class="cards" id="pulse"></div>
+
+  <div class="folder f1">
+    <div class="tab">Lanes <small>ranked by distance to cash</small></div>
+    <div class="sheet" id="lanes"></div>
+  </div>
+
+  <div class="folder f2">
+    <div class="tab">Signals <small>inbox · calendar · gates</small></div>
+    <div class="sheet">
+      <div class="grid2">
+        <div>
+          <h4 class="ph">From the inbox — lane contacts</h4>
+          <div id="inbox"></div>
+          <h4 class="ph" style="margin-top:20px">Calendar — today &amp; tomorrow</h4>
+          <div id="calendar"></div>
+        </div>
+        <div>
+          <h4 class="ph">Dates that gate the money</h4>
+          <div id="gates"></div>
+          <h4 class="ph" style="margin-top:20px">Treasury</h4>
+          <div id="money" style="font-size:14px;color:var(--ink2);line-height:2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="folder f3">
+    <div class="tab">The record <small>since you last looked</small></div>
+    <div class="sheet ruled" id="activity"></div>
+  </div>
+
+  <div class="folder f4">
+    <div class="tab">Machine <small>systems &amp; commands</small></div>
+    <div class="sheet">
+      <div class="sysgrid" id="systems"></div>
+      <h4 class="ph" style="margin-top:20px">Say it to CLIP — plain words work</h4>
+      <div class="cmds" id="cmds"></div>
+    </div>
+  </div>
+
+  <div class="colophon" id="foot"></div>
+</div>
+
+<script>
+const DATA=/*__DATA__*/{};
+(function(){
+  const D=DATA, now=new Date();
+  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const P=d=>new Date(d+'T00:00:00+05:30');
+  const dd=d=>Math.ceil((P(d)-now)/864e5);
+  const drought=d=>{const a=P(d);let m=(now.getFullYear()-a.getFullYear())*12+now.getMonth()-a.getMonth();if(now.getDate()<a.getDate())m--;return Math.max(0,m)+' mo';};
+  const warm=(s,e)=>{const t=Math.round((P(e)-P(s))/864e5),n=Math.round((now-P(s))/864e5);return n>=t?'done':(n<0?'in '+(-n)+'d':n+' of '+t+'d');};
+  const tminus=g=>{const f=g.map(dd).filter(x=>x>=0).sort((a,b)=>a-b)[0];return f==null?'—':(f===0?'today':f+' days');};
+  const sv=s=>s.kind==='drought'?drought(s.date):s.kind==='tminus'?tminus(s.gates):s.kind==='warmup'?warm(s.start,s.end):s.v;
+  const ago=iso=>{if(!iso)return null;const h=(now-new Date(iso))/36e5;return h<1?'just now':h<48?Math.round(h)+'h ago':Math.round(h/24)+'d ago';};
+  const el=id=>document.getElementById(id);
+
+  el('caseno').textContent=new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(now)+' · '+D.directive;
+  const gh=(now-new Date(D.generated_at))/36e5;
+  const st=el('stamp');
+  st.textContent='filed '+(ago(D.generated_at)||'—')+' · signals '+(D.live_fetched_at?ago(D.live_fetched_at):'none');
+  if(gh>72)st.className='stamp bad'; else if(gh>24){st.className='stamp warn';st.textContent+=' — stale, say “hi clip”';}
+
+  el('hero-action').textContent=D.hero.action;
+  el('hero-why').textContent=D.hero.why;
+  el('queue').innerHTML=(D.hero.queue||[]).map(q=>'<li>'+esc(q)+'</li>').join('');
+
+  el('pulse').innerHTML=D.stats.map(s=>'<div class="card"><div class="k">'+esc(s.k)+'</div>'+
+    '<div class="v num '+(s.tone||'')+'">'+esc(sv(s))+'</div>'+
+    (s.sub?'<div class="s">'+esc(s.sub)+'</div>':'')+'</div>').join('');
+
+  el('lanes').innerHTML=D.lanes.map(l=>'<div class="lane'+(l.tone==='bad'?' dim':'')+'">'+
+    '<div class="rk">'+l.rank+'</div>'+
+    '<div><div class="lname">'+esc(l.name)+'</div><div class="lcrew">'+esc(l.crew)+'</div></div>'+
+    '<div class="c3"><span class="sticker '+esc(l.tone)+'">'+esc(l.status)+'</span>'+
+    '<div class="ldist">distance: <b>'+esc(l.distance)+'</b></div></div>'+
+    '<div class="c4"><div class="lnext"><b>Next:</b> '+esc(l.next)+'</div>'+
+    (l.blocker?'<div class="lblock">✗ '+esc(l.blocker)+'</div>':'')+'</div></div>').join('')+
+    '<div class="closed-note"><b>Filed away:</b> '+D.dead_lanes.map(x=>esc(x.name)+' — '+esc(x.ref)).join(' · ')+'</div>';
+
+  const inbox=D.signals.inbox||[];
+  el('inbox').innerHTML=inbox.length?inbox.map(m=>'<div class="sig"><span class="w">'+esc(m.age||'')+'</span>'+
+    '<span class="b"><b>'+esc(m.from)+'</b> — '+esc(m.subject)+(m.unread?'<span class="flag">UNREAD</span>':'')+'</span></div>').join('')
+    :'<div class="empty">Nothing from lane contacts in the window.</div>';
+  const cal=D.signals.calendar||[];
+  el('calendar').innerHTML=cal.length?cal.map(c=>'<div class="sig"><span class="w">'+esc(c.when)+'</span><span class="b">'+esc(c.what)+'</span></div>').join('')
+    :'<div class="empty">Clear — nothing scheduled.</div>';
+
+  el('gates').innerHTML=D.gates.map(g=>{const d=dd(g.date);
+    return '<div class="gate"><span class="t num'+(d<0?' past':'')+'">'+(d<0?'passed':(d===0?'TODAY':'T−'+d+'d'))+'</span>'+
+    '<span><div class="g">'+esc(g.label)+'</div><div class="n">'+esc(g.note)+'</div></span></div>';}).join('');
+  el('money').innerHTML='<b>Last in:</b> '+esc(D.money.last)+'<br><b>Burn:</b> '+esc(D.money.burn);
+
+  el('activity').innerHTML=(D.activity||[]).map(a=>'<div class="sig"><span class="w">'+esc(a.when)+'</span>'+
+    '<span class="rec-what">'+esc(a.what)+'</span></div>').join('')||'<div class="empty">No record.</div>';
+
+  const SLBL={on:'LIVE',ext:'EXTERNAL',off:'PARKED',err:'BROKEN'};
+  el('systems').innerHTML=D.systems.map(s=>'<div class="sys"><span class="state '+esc(s.state)+'">'+
+    (SLBL[s.state]||'—')+'</span><span><span class="nm">'+esc(s.name)+'</span> <span class="nt">— '+esc(s.note)+'</span></span></div>').join('');
+  el('cmds').innerHTML=D.commands.map(c=>'<div class="cmd"><b>“'+esc(c.say)+'”</b> <span>→ '+esc(c.does)+'</span></div>').join('');
+  el('foot').textContent='Case file · re-filed by CLIP on every “hi clip” · sources: data layer + decisions D45–D50';
+})();
+</script>
+</body>
+</html>

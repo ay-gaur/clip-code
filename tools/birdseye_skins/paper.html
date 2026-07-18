@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Acme Ledger</title>
+<style>
+  :root{
+    --paper:#FCFBF8; --ink:#191918; --ink2:#55524C; --ink3:#8B8779;
+    --rule:#D9D5CC; --rule-strong:#191918; --red:#B3261E; --green:#2E6B4F;
+    --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{background:var(--paper)}
+  body{margin:0;background:var(--paper);color:var(--ink);font:13.5px/1.55 var(--sans)}
+  .page{max-width:960px;margin:0 auto;padding:26px 22px 70px}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* masthead */
+  .mast{text-align:center;border-bottom:3px double var(--rule-strong);padding-bottom:12px}
+  .mast h1{font-family:var(--serif);font-weight:700;font-size:clamp(30px,5.4vw,44px);margin:4px 0 2px;letter-spacing:.02em}
+  .mast .motto{font-family:var(--serif);font-style:italic;font-size:12.5px;color:var(--ink2)}
+  .dateline{display:flex;flex-wrap:wrap;gap:4px 18px;justify-content:center;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink2);border-bottom:1px solid var(--rule-strong);padding:7px 0;margin-bottom:22px}
+  .dateline .stale{color:var(--red);font-weight:700}
+
+  /* lead */
+  .lead{text-align:left;border-bottom:1px solid var(--rule);padding-bottom:18px;margin-bottom:18px}
+  .kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);font-weight:700;margin-bottom:8px}
+  .lead h2{font-family:var(--serif);font-size:clamp(24px,4vw,36px);line-height:1.18;margin:0;font-weight:700;
+    letter-spacing:-.01em;text-wrap:balance}
+  .deck{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--ink2);margin-top:10px;line-height:1.5;max-width:64ch}
+  .queue{margin-top:12px;font-size:12.5px;color:var(--ink2)}
+  .queue b{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);font-weight:700}
+
+  /* index strip (pulse) */
+  .strip{display:flex;flex-wrap:wrap;border-top:2px solid var(--rule-strong);border-bottom:1px solid var(--rule);
+    margin-bottom:26px}
+  .idx{flex:1;min-width:130px;padding:10px 14px 10px 0;border-right:1px solid var(--rule);margin-right:14px}
+  .idx:last-child{border-right:0;margin-right:0}
+  .idx .k{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink3);font-weight:700}
+  .idx .v{font-family:var(--serif);font-size:21px;font-weight:700;margin-top:3px}
+  .idx .v.red{color:var(--red)} .idx .v.green{color:var(--green)}
+  .idx .sub{font-size:10.5px;color:var(--ink3)}
+
+  h3.sec{font-size:12px;letter-spacing:.22em;text-transform:uppercase;font-weight:800;margin:26px 0 2px;
+    border-bottom:2px solid var(--rule-strong);padding-bottom:5px}
+  .secnote{font-size:11px;color:var(--ink3);font-style:italic;margin-bottom:10px}
+
+  /* market table (lanes) */
+  .mkt-wrap{overflow-x:auto}
+  table.mkt{width:100%;border-collapse:collapse;min-width:620px}
+  table.mkt th{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);text-align:left;
+    padding:7px 12px 7px 0;border-bottom:1px solid var(--rule)}
+  table.mkt td{padding:10px 12px 10px 0;border-bottom:1px solid var(--rule);vertical-align:top;font-size:12.5px}
+  table.mkt tr:last-child td{border-bottom:0}
+  .mkt .co{font-family:var(--serif);font-weight:700;font-size:15px}
+  .mkt .crew{font-size:11px;color:var(--ink3)}
+  .mkt .arrow{font-family:var(--serif);font-weight:700;font-size:15px;width:26px}
+  .up{color:var(--green)} .flat{color:var(--ink3)} .down{color:var(--red)}
+  .mkt .st{color:var(--ink2)}
+  .mkt .next{color:var(--ink2)}
+  .mkt .blk{font-size:11px;color:var(--red);margin-top:2px}
+  .obit{font-size:11.5px;color:var(--ink3);font-style:italic;margin-top:10px;line-height:1.8}
+
+  /* columns zone */
+  .cols{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:0;margin-top:4px}
+  .col{padding:0 18px}
+  .col:first-child{padding-left:0}
+  .col:last-child{padding-right:0}
+  .col+.col{border-left:1px solid var(--rule)}
+  @media (max-width:820px){.cols{grid-template-columns:1fr}.col{padding:0;border-left:0 !important;margin-top:18px}}
+  h4.colhead{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;margin:8px 0 8px;font-weight:800;color:var(--ink)}
+  .dispatch{padding:7px 0;border-bottom:1px dotted var(--rule);font-size:12.5px}
+  .dispatch:last-child{border-bottom:0}
+  .dispatch .w{font-size:10px;letter-spacing:.08em;color:var(--ink3);text-transform:uppercase}
+  .dispatch b{font-weight:700}
+  .unread{color:var(--red);font-weight:800;font-size:10px;letter-spacing:.1em}
+  .gate .t{font-family:var(--serif);font-weight:700;font-size:15px}
+  .gate .t.past{color:var(--ink3);font-weight:400}
+  .empty{font-size:12px;color:var(--ink3);font-style:italic;padding:6px 0}
+
+  /* record + footer */
+  .record{column-count:2;column-gap:36px;column-rule:1px solid var(--rule);margin-top:6px}
+  @media (max-width:720px){.record{column-count:1}}
+  .rec{break-inside:avoid;padding:5px 0;font-size:12px;border-bottom:1px dotted var(--rule)}
+  .rec .w{font-size:10px;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase;margin-right:8px}
+  .foot-band{margin-top:26px;border-top:3px double var(--rule-strong);padding-top:12px}
+  .sysline{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:11px;color:var(--ink2)}
+  .sys b{font-size:9.5px;letter-spacing:.12em;font-weight:800}
+  .sys b.on{color:var(--green)} .sys b.ext{color:#8A6D1F} .sys b.off{color:var(--ink3)} .sys b.err{color:var(--red)}
+  .classifieds{margin-top:12px;font-size:11.5px;color:var(--ink2);line-height:1.9}
+  .classifieds b{font-family:var(--serif)}
+  .colophon{margin-top:16px;text-align:center;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="mast">
+    <div class="motto">All the leverage that's fit to ship</div>
+    <h1>The Acme Ledger</h1>
+    <div class="motto" id="directive"></div>
+  </header>
+  <div class="dateline">
+    <span id="edition"></span><span id="dl-date"></span><span id="dl-sync"></span><span id="dl-sig"></span>
+  </div>
+
+  <div class="lead">
+    <div class="kicker">The one thing</div>
+    <h2 id="hero-action"></h2>
+    <div class="deck" id="hero-why"></div>
+    <div class="queue" id="queue"></div>
+  </div>
+
+  <div class="strip" id="pulse"></div>
+
+  <h3 class="sec">The Lanes</h3>
+  <div class="secnote">ranked by distance to cash — the market table</div>
+  <div class="mkt-wrap"><table class="mkt"><thead><tr>
+    <th></th><th>Lane</th><th>Standing</th><th>Distance to cash</th><th>Next move</th>
+  </tr></thead><tbody id="lanes"></tbody></table></div>
+  <div class="obit" id="dead"></div>
+
+  <h3 class="sec">Dispatches</h3>
+  <div class="cols">
+    <div class="col"><h4 class="colhead">From the inbox</h4><div id="inbox"></div>
+      <h4 class="colhead" style="margin-top:16px">The diary — today &amp; tomorrow</h4><div id="calendar"></div></div>
+    <div class="col"><h4 class="colhead">Approaching gates</h4><div id="gates"></div></div>
+    <div class="col"><h4 class="colhead">Treasury</h4><div id="money" style="font-size:12.5px"></div>
+      <h4 class="colhead" style="margin-top:16px">Say it to CLIP</h4><div class="classifieds" id="cmds"></div></div>
+  </div>
+
+  <h3 class="sec">The Record</h3>
+  <div class="secnote">what happened while you weren't looking</div>
+  <div class="record" id="activity"></div>
+
+  <div class="foot-band">
+    <div class="sysline" id="systems"></div>
+    <div class="colophon" id="foot"></div>
+  </div>
+</div>
+
+<script>
+const DATA=/*__DATA__*/{};
+(function(){
+  const D=DATA, now=new Date();
+  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const P=d=>new Date(d+'T00:00:00+05:30');
+  const dd=d=>Math.ceil((P(d)-now)/864e5);
+  const drought=d=>{const a=P(d);let m=(now.getFullYear()-a.getFullYear())*12+now.getMonth()-a.getMonth();if(now.getDate()<a.getDate())m--;return Math.max(0,m)+' mo';};
+  const warm=(s,e)=>{const t=Math.round((P(e)-P(s))/864e5),n=Math.round((now-P(s))/864e5);return n>=t?'done':(n<0?'in '+(-n)+'d':'day '+n+' of '+t);};
+  const tminus=g=>{const f=g.map(dd).filter(x=>x>=0).sort((a,b)=>a-b)[0];return f==null?'—':(f===0?'today':f+' days');};
+  const sv=s=>s.kind==='drought'?drought(s.date):s.kind==='tminus'?tminus(s.gates):s.kind==='warmup'?warm(s.start,s.end):s.v;
+  const ago=iso=>{if(!iso)return null;const h=(now-new Date(iso))/36e5;return h<1?'just now':h<48?Math.round(h)+'h ago':Math.round(h/24)+'d ago';};
+  const el=id=>document.getElementById(id);
+
+  el('directive').textContent=D.directive;
+  const g=new Date(D.generated_at);
+  el('edition').textContent='Solo edition';
+  el('dl-date').textContent=new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(now);
+  const gh=(now-g)/36e5;
+  el('dl-sync').innerHTML='pressed '+ago(D.generated_at)+(gh>24?' — <span class="stale">stale, say “hi clip”</span>':'');
+  el('dl-sig').textContent='signals: '+(D.live_fetched_at?ago(D.live_fetched_at):'none fetched');
+
+  el('hero-action').textContent=D.hero.action;
+  el('hero-why').textContent=D.hero.why;
+  el('queue').innerHTML=(D.hero.queue||[]).length?'<b>And then —</b> '+D.hero.queue.map(esc).join(' · '):'';
+
+  const toneCls={bad:'red',ok:'green'};
+  el('pulse').innerHTML=D.stats.map(s=>'<div class="idx"><div class="k">'+esc(s.k)+'</div>'+
+    '<div class="v num '+(toneCls[s.tone]||'')+'">'+esc(sv(s))+'</div>'+
+    (s.sub?'<div class="sub">'+esc(s.sub)+'</div>':'')+'</div>').join('');
+
+  const ARROW={ok:['▲','up'],warn:['▶','flat'],bad:['▼','down']};
+  el('lanes').innerHTML=D.lanes.map(l=>{const a=ARROW[l.tone]||ARROW.warn;
+    return '<tr><td class="arrow '+a[1]+'">'+a[0]+'</td>'+
+    '<td><div class="co">'+esc(l.name)+'</div><div class="crew">'+esc(l.crew)+'</div></td>'+
+    '<td class="st">'+esc(l.status)+'</td>'+
+    '<td class="st num">'+esc(l.distance)+'</td>'+
+    '<td class="next">'+esc(l.next)+(l.blocker?'<div class="blk">Blocked: '+esc(l.blocker)+'</div>':'')+'</td></tr>';}).join('');
+  el('dead').innerHTML='<b>Obituaries &amp; long parkings:</b> '+D.dead_lanes.map(x=>esc(x.name)+' ('+esc(x.ref)+')').join(' · ');
+
+  const inbox=D.signals.inbox||[];
+  el('inbox').innerHTML=inbox.length?inbox.map(m=>'<div class="dispatch"><span class="w">'+esc(m.age||'')+'</span> '+
+    (m.unread?'<span class="unread">UNREAD · </span>':'')+'<b>'+esc(m.from)+'</b> — '+esc(m.subject)+'</div>').join('')
+    :'<div class="empty">Nothing from lane contacts in the window.</div>';
+  const cal=D.signals.calendar||[];
+  el('calendar').innerHTML=cal.length?cal.map(c=>'<div class="dispatch"><span class="w">'+esc(c.when)+'</span> '+esc(c.what)+'</div>').join('')
+    :'<div class="empty">The diary is clear.</div>';
+
+  el('gates').innerHTML=D.gates.map(x=>{const d=dd(x.date);
+    return '<div class="dispatch gate"><div class="t num '+(d<0?'past':'')+'">'+(d<0?'passed':(d===0?'TODAY':'T−'+d+' days'))+'</div>'+
+    '<b>'+esc(x.label)+'</b><br><span style="color:var(--ink3);font-size:11.5px">'+esc(x.note)+'</span></div>';}).join('');
+
+  el('money').innerHTML='<div class="dispatch"><span class="w">last in</span> <b>'+esc(D.money.last)+'</b></div>'+
+    '<div class="dispatch"><span class="w">burn</span> '+esc(D.money.burn)+'</div>';
+  el('cmds').innerHTML=D.commands.map(c=>'<b>“'+esc(c.say)+'”</b> — '+esc(c.does)).join('<br>');
+
+  el('activity').innerHTML=(D.activity||[]).map(a=>'<div class="rec"><span class="w">'+esc(a.when)+'</span>'+esc(a.what)+'</div>').join('')||'<div class="empty">No record.</div>';
+
+  el('systems').innerHTML=D.systems.map(s=>'<span class="sys"><b class="'+esc(s.state)+'">'+
+    ({on:'LIVE',ext:'EXTERNAL',off:'PARKED',err:'BROKEN'}[s.state]||'—')+'</b> '+esc(s.name)+
+    ' <span style="color:var(--ink3)">('+esc(s.note)+')</span></span>').join('');
+  el('foot').textContent='The Acme Ledger · pressed by CLIP on every “hi clip” · sources: data layer, decisions D45–D50';
+})();
+</script>
+</body>
+</html>

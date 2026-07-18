@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Acme Pit Wall</title>
+<style>
+  :root{
+    --ground:#0B0E14; --panel:#121826; --raised:#1A2233; --inset:#0E131D;
+    --line:#232C3F; --line-soft:#1A2130;
+    --ink:#EAF0F9; --ink-2:#97A1B7; --ink-3:#5B6579;
+    --t-alpha:#E06612; --t-beta:#1B9CCC; --t-gamma:#8E6FE8; --t-delta:#D14E8F;
+    --ok:#34C97B; --warn:#F2C230; --bad:#E5484D; --fastest:#B24BF3;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --cond:"Avenir Next Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+    --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{background:var(--ground)}
+  body{background:var(--ground);color:var(--ink);font-family:var(--body);margin:0;
+       font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 16px 64px}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* ————— session header ————— */
+  header.session{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,#0B0E14 82%,rgba(11,14,20,0));
+    padding:14px 0 8px}
+  .head-card{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .head-strip{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--line)}
+  .head-flag{width:10px;background:repeating-linear-gradient(45deg,#fff 0 6px,#0B0E14 6px 12px);opacity:.85}
+  .head-main{flex:1;padding:10px 14px;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 18px}
+  .gp-title{font-family:var(--cond);font-weight:800;font-size:clamp(19px,3.2vw,26px);
+    text-transform:uppercase;letter-spacing:.02em;font-style:italic}
+  .gp-title em{color:var(--t-alpha);font-style:italic}
+  .gp-sub{font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.08em;text-transform:uppercase}
+  .live{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--ok);
+    letter-spacing:.12em;text-transform:uppercase}
+  .live i{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;animation:blink 1.6s infinite}
+  .live.warn{color:var(--warn)} .live.warn i{background:var(--warn)}
+  .live.bad{color:var(--bad)} .live.bad i{background:var(--bad)}
+  @keyframes blink{50%{opacity:.25}}
+  @media (prefers-reduced-motion:reduce){.live i{animation:none}}
+  .clock{font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-left:auto;letter-spacing:.06em}
+
+  .tabs{display:flex;gap:6px;padding:8px 10px;background:var(--inset);flex-wrap:wrap}
+  .tab{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);
+    font-family:var(--cond);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;
+    padding:7px 14px;border-radius:4px;cursor:pointer;transform:skewX(-8deg)}
+  .tab>span{display:inline-block;transform:skewX(8deg)}
+  .tab[aria-selected="true"]{background:var(--ink);color:#0B0E14;border-color:var(--ink)}
+  .tab:hover:not([aria-selected="true"]){color:var(--ink);border-color:var(--ink-3)}
+  .tab:focus-visible{outline:2px solid var(--t-beta);outline-offset:2px}
+  .feedtag{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.14em;align-self:center;
+    margin-left:auto;padding-right:6px;text-transform:uppercase}
+
+  /* ————— THE ONE THING (always visible) ————— */
+  .hero{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--fastest);
+    border-radius:6px;margin-top:14px;padding:14px 18px}
+  .hero .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--fastest);
+    text-transform:uppercase;margin-bottom:7px}
+  .hero h1{margin:0;font-size:clamp(16px,2.4vw,21px);font-weight:680;line-height:1.4;letter-spacing:-.005em;text-wrap:balance}
+  .hero .why{margin-top:7px;font-size:12.5px;color:var(--ink-2)}
+  .hero .queue{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft);display:grid;gap:5px}
+  .hero .queue div{font-size:12px;color:var(--ink-2)}
+  .hero .queue div::before{content:"THEN";font-family:var(--mono);font-size:9px;color:var(--ink-3);
+    letter-spacing:.14em;margin-right:9px}
+
+  main section.view{display:none;padding-top:18px}
+  main section.view.active{display:block}
+
+  h2.block{font-family:var(--cond);font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.14em;
+    color:var(--ink-2);margin:26px 0 10px;display:flex;align-items:center;gap:10px}
+  h2.block::after{content:"";flex:1;height:1px;background:var(--line)}
+  h2.block:first-child{margin-top:4px}
+
+  /* ————— 1 · PIT WALL ————— */
+  .tower{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .tower-scroll{overflow-x:auto}
+  table.tt{width:100%;border-collapse:collapse;min-width:780px}
+  table.tt th{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-3);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--inset)}
+  table.tt td{padding:11px 12px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  table.tt tbody tr.row{cursor:pointer}
+  table.tt tbody tr.row:hover td{background:var(--raised)}
+  table.tt tbody tr.row:focus-visible{outline:2px solid var(--t-beta);outline-offset:-2px}
+  tr.detail td{background:var(--inset);padding:0 12px}
+  tr.detail .dwrap{overflow:hidden;max-height:0;transition:max-height .25s ease}
+  tr.detail.open .dwrap{max-height:420px}
+  @media (prefers-reduced-motion:reduce){tr.detail .dwrap{transition:none}}
+  .dinner{padding:14px 4px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 22px;
+    font-size:12.5px;color:var(--ink-2)}
+  .dinner .dlabel{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink-3);display:block;margin-bottom:3px}
+  .pos{font-family:var(--cond);font-weight:800;font-style:italic;font-size:17px;width:34px;height:26px;
+    display:inline-flex;align-items:center;justify-content:center;border-radius:3px;transform:skewX(-8deg);
+    background:var(--ink);color:#0B0E14}
+  .pos>span{transform:skewX(8deg)}
+  .pos.p1{background:var(--fastest);color:#fff}
+  .team{display:flex;align-items:center;gap:10px}
+  .stripe{width:4px;height:30px;border-radius:2px;flex:none}
+  .tname{font-family:var(--cond);font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.03em;line-height:1.1}
+  .tcrew{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.06em}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;padding:3px 8px;border-radius:3px;border:1px solid;white-space:nowrap}
+  .chip.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,transparent);background:color-mix(in srgb,var(--ok) 10%,transparent)}
+  .chip.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:color-mix(in srgb,var(--warn) 10%,transparent)}
+  .chip.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,transparent);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+  .gap{font-family:var(--mono);font-size:13px;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+  .gap b{color:var(--fastest);font-weight:700}
+  .lap{font-size:12.5px;color:var(--ink-2);max-width:240px}
+  .lap b{color:var(--ink);font-weight:600}
+  .hint{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;
+    padding:8px 12px;background:var(--inset)}
+  tr.dimrow .tname{color:var(--ink-2)} tr.dimrow .stripe{opacity:.5} tr.dimrow .gap{color:var(--ink-3)}
+
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:760px){.twocol{grid-template-columns:1fr}}
+  .panelbox{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .panelbox .pb-h{font-family:var(--cond);font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-2);padding:9px 12px;border-bottom:1px solid var(--line);background:var(--inset)}
+  ul.classif,ul.rc{list-style:none;margin:0;padding:4px 0}
+  ul.classif li{display:flex;gap:10px;align-items:baseline;padding:7px 12px;border-bottom:1px solid var(--line-soft);font-size:12.5px}
+  ul.classif li:last-child{border-bottom:0}
+  .cl-tag{font-family:var(--mono);font-size:10px;letter-spacing:.1em;width:38px;flex:none;padding:2px 0;text-align:center;
+    border-radius:3px;border:1px solid var(--line);color:var(--ink-3)}
+  .cl-tag.DNF{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,transparent)}
+  .cl-name{color:var(--ink);font-weight:600}
+  .cl-why{color:var(--ink-3);font-size:11.5px}
+  ul.rc li{display:flex;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line-soft);font-size:12.5px;align-items:baseline}
+  ul.rc li:last-child{border-bottom:0}
+  .rc-when{font-family:var(--mono);font-size:10.5px;color:var(--warn);letter-spacing:.06em;min-width:64px;flex:none;font-variant-numeric:tabular-nums}
+  .rc-when.dim{color:var(--ink-3)}
+  .rc-msg{color:var(--ink-2)} .rc-msg b{color:var(--ink);font-weight:600}
+  .points{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+  .pt{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 14px;flex:1;min-width:150px}
+  .pt .k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+  .pt .v{font-family:var(--cond);font-weight:800;font-size:22px;font-style:italic;margin-top:2px}
+  .pt .v small{font-size:12px;color:var(--ink-3);font-style:normal;font-family:var(--mono);letter-spacing:.04em}
+
+  /* ————— 2 · MISSION CONTROL ————— */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+  .tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+  .tile .v{font-family:var(--cond);font-weight:800;font-size:28px;font-style:italic;line-height:1.05;margin:6px 0 2px}
+  .tile .v small{font-size:13px;color:var(--ink-2);font-style:normal}
+  .tile .s{font-size:11.5px;color:var(--ink-2)}
+  .tile.bad .v{color:var(--bad)} .tile.warn .v{color:var(--warn)} .tile.ok .v{color:var(--ok)}
+  .bar{height:8px;background:var(--inset);border:1px solid var(--line);border-radius:4px;margin:10px 0 6px;position:relative;overflow:hidden}
+  .bar i{position:absolute;inset:0;width:var(--w,0%);background:var(--t-beta);border-radius:3px}
+  .gates{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:2px}
+  .gate{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:flex;gap:12px;align-items:center}
+  .gate .d{font-family:var(--cond);font-weight:800;font-style:italic;font-size:26px;min-width:74px;text-align:center;
+    background:var(--inset);border:1px solid var(--line);border-radius:4px;padding:6px 4px;font-variant-numeric:tabular-nums}
+  .gate .d small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--ink-3);font-style:normal;margin-top:2px}
+  .gate .g-what{font-size:12px;color:var(--ink-2)} .gate .g-what b{color:var(--ink);display:block;font-size:12.5px}
+  .chart-wrap{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px 8px}
+  .chart-title{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+  .chart{position:relative;height:130px;display:flex;align-items:flex-end;gap:8px;padding:0 2px}
+  .cbar{flex:1;position:relative;display:flex;flex-direction:column;justify-content:flex-end;height:100%;cursor:default}
+  .cbar .fill{background:var(--t-beta);border-radius:4px 4px 0 0;min-height:2px;opacity:.35}
+  .cbar.hit .fill{opacity:1}
+  .cbar .val{position:absolute;left:50%;font-family:var(--mono);font-size:10.5px;color:var(--ink);white-space:nowrap}
+  .cbar:hover .fill{box-shadow:0 0 0 3px color-mix(in srgb,var(--t-beta) 55%,transparent)}
+  .xlab{display:flex;gap:8px;padding:6px 2px 4px;border-top:1px solid var(--line-soft);margin-top:8px}
+  .xlab span{flex:1;text-align:center;font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em}
+  .ctip{position:absolute;pointer-events:none;background:var(--raised);border:1px solid var(--line);border-radius:4px;
+    padding:5px 8px;font-family:var(--mono);font-size:11px;color:var(--ink);transform:translate(-50%,-115%);
+    white-space:nowrap;opacity:0;transition:opacity .12s;z-index:5}
+  table.sys{width:100%;border-collapse:collapse}
+  table.sys td{padding:8px 12px;border-bottom:1px solid var(--line-soft);font-size:12.5px}
+  table.sys tr:last-child td{border-bottom:0}
+  table.sys .sname{color:var(--ink);font-weight:600;width:40%}
+  table.sys .snote{color:var(--ink-3);font-size:11.5px}
+  .lamp{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;white-space:nowrap}
+  .lamp i{width:8px;height:8px;border-radius:50%;flex:none}
+  .lamp.on{color:var(--ok)} .lamp.on i{background:var(--ok)}
+  .lamp.off{color:var(--ink-3)} .lamp.off i{background:var(--ink-3)}
+  .lamp.err{color:var(--bad)} .lamp.err i{background:var(--bad)}
+  .lamp.ext{color:var(--warn)} .lamp.ext i{background:var(--warn)}
+  .sig-list{list-style:none;margin:0;padding:4px 0}
+  .sig-list li{display:flex;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line-soft);font-size:12.5px;align-items:baseline}
+  .sig-list li:last-child{border-bottom:0}
+  .sig-when{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);min-width:44px;font-variant-numeric:tabular-nums}
+  .sig-b{color:var(--ink-2)} .sig-b b{color:var(--ink);font-weight:600}
+  .pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--warn);
+    border:1px solid var(--warn);border-radius:3px;padding:1px 5px;margin-left:8px;vertical-align:1px}
+  .empty{font-size:12px;color:var(--ink-3);font-style:italic;padding:8px 12px}
+
+  /* ————— 3 · COMMAND DECK ————— */
+  .deck-note{font-size:12.5px;color:var(--ink-2);max-width:64ch;margin:2px 0 14px}
+  .deck{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  .cmd{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;position:relative}
+  .cmd .cname{font-family:var(--mono);font-size:13px;color:var(--ink);font-weight:700;letter-spacing:.02em}
+  .cmd .cdo{font-size:12px;color:var(--ink-2);margin:5px 0 8px;min-height:32px}
+  .cmd .csay{font-size:11.5px;color:var(--ink-3);font-style:italic;border-left:2px solid var(--line);padding-left:8px}
+  .cmd .csay b{color:var(--ink-2);font-weight:600}
+  .cmd.parked{opacity:.55}
+
+  footer{margin-top:34px;font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.08em;
+    text-transform:uppercase;display:flex;flex-wrap:wrap;gap:6px 18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="session">
+    <div class="head-card">
+      <div class="head-strip">
+        <div class="head-flag" aria-hidden="true"></div>
+        <div class="head-main">
+          <div class="gp-title">Acme <em>Grand Prix</em> — 2026 Season</div>
+          <div class="gp-sub" id="directive"></div>
+          <span class="live" id="synced"><i></i><span>SYNCED</span></span>
+          <span class="clock" id="clock">—</span>
+        </div>
+      </div>
+      <nav class="tabs" role="tablist" aria-label="Views">
+        <button class="tab" role="tab" aria-selected="true" aria-controls="v-pitwall" id="t-pitwall"><span>🏁 Pit Wall</span></button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="v-mission" id="t-mission"><span>📡 Mission Control</span></button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="v-deck" id="t-deck"><span>🎛 Command Deck</span></button>
+        <span class="feedtag" id="feedtag">live board · pick your feed</span>
+      </nav>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="eyebrow">P0 — The one thing</div>
+    <h1 id="hero-action"></h1>
+    <div class="why" id="hero-why"></div>
+    <div class="queue" id="hero-queue"></div>
+  </div>
+
+  <main>
+  <!-- ═══ 1 · PIT WALL ═══ -->
+  <section class="view active" id="v-pitwall" role="tabpanel" aria-labelledby="t-pitwall">
+    <h2 class="block">Timing tower — lanes ranked by distance to cash</h2>
+    <div class="tower">
+      <div class="tower-scroll">
+      <table class="tt">
+        <thead><tr>
+          <th>Pos</th><th>Lane / Crew</th><th>Status</th><th>Interval&nbsp;→&nbsp;cash</th><th>Last lap</th><th>Next lap</th>
+        </tr></thead>
+        <tbody id="tower-body"></tbody>
+      </table>
+      </div>
+      <div class="hint">Tap a row for telemetry · interval = what stands between the lane and an invoice</div>
+    </div>
+
+    <div class="points" id="points"></div>
+
+    <div class="twocol" style="margin-top:16px">
+      <div class="panelbox">
+        <div class="pb-h">Race control</div>
+        <ul class="rc" id="racecontrol"></ul>
+      </div>
+      <div class="panelbox">
+        <div class="pb-h">Classification — out of the race</div>
+        <ul class="classif" id="classif"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 2 · MISSION CONTROL ═══ -->
+  <section class="view" id="v-mission" role="tabpanel" aria-labelledby="t-mission">
+    <h2 class="block">Telemetry</h2>
+    <div class="tiles" id="tiles"></div>
+
+    <h2 class="block">Countdown gates</h2>
+    <div class="gates" id="gates"></div>
+
+    <h2 class="block">Money — 2026 by month</h2>
+    <div class="chart-wrap">
+      <div class="chart-title" id="rev-title"></div>
+      <div class="chart" id="revchart"><div class="ctip" id="ctip"></div></div>
+      <div class="xlab" id="revlab"></div>
+    </div>
+
+    <h2 class="block">Signals — live layer</h2>
+    <div class="twocol">
+      <div class="panelbox">
+        <div class="pb-h">Inbox — lane contacts</div>
+        <ul class="sig-list" id="inbox"></ul>
+      </div>
+      <div class="panelbox">
+        <div class="pb-h">Calendar — today &amp; tomorrow</div>
+        <ul class="sig-list" id="calendar"></ul>
+      </div>
+    </div>
+
+    <h2 class="block">Since you last looked</h2>
+    <div class="panelbox"><ul class="sig-list" id="activity"></ul></div>
+
+    <div class="twocol" style="margin-top:16px">
+      <div class="panelbox">
+        <div class="pb-h">Systems board — what's actually running (D49)</div>
+        <table class="sys" id="systems"></table>
+      </div>
+      <div class="panelbox">
+        <div class="pb-h">Grid + paddock — people</div>
+        <table class="sys" id="people"></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 3 · COMMAND DECK ═══ -->
+  <section class="view" id="v-deck" role="tabpanel" aria-labelledby="t-deck">
+    <h2 class="block">Active — say it to CLIP, plain words work</h2>
+    <p class="deck-note">Everything routes through the CEO — you never need the slash names. Open a session in
+      <b>clip2.0</b>, say "hi clip" for the pulse, then just talk. Accent = the lane each command serves most right now.</p>
+    <div class="deck" id="deck-active"></div>
+    <h2 class="block">Strategy commands — run from the clip2.0 root</h2>
+    <div class="deck" id="deck-strategy"></div>
+    <h2 class="block">Parked / retired — still on disk, not in the race</h2>
+    <div class="deck" id="deck-parked"></div>
+  </section>
+  </main>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const DATA=/*__DATA__*/{};
+(function(){
+  const D=DATA, now=new Date();
+  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const P=d=>new Date(d+'T00:00:00+05:30');
+  const dd=d=>Math.ceil((P(d)-now)/864e5);
+  const droughtMo=d=>{const a=P(d);let m=(now.getFullYear()-a.getFullYear())*12+now.getMonth()-a.getMonth();if(now.getDate()<a.getDate())m--;return Math.max(0,m);};
+  const warm=(s,e)=>{const t=Math.round((P(e)-P(s))/864e5),n=Math.round((now-P(s))/864e5);return n>=t?'DONE':(n<0?'T-'+(-n)+'d':'Day '+n+'<small> / ~'+t+'</small>');};
+  const tminus=g=>{const f=g.map(dd).filter(x=>x>=0).sort((a,b)=>a-b)[0];return f==null?'—':(f===0?'TODAY':'T-'+f+'d');};
+  const sv=s=>s.kind==='drought'?droughtMo(s.date)+' mo':s.kind==='tminus'?tminus(s.gates):s.kind==='warmup'?warm(s.start,s.end):esc(s.v);
+  const ago=iso=>{if(!iso)return null;const h=(now-new Date(iso))/36e5;return h<1?'just now':h<48?Math.round(h)+'h ago':Math.round(h/24)+'d ago';};
+  const el=id=>document.getElementById(id);
+  const LCOLOR={alpha:'var(--t-alpha)',beta:'var(--t-beta)',gamma:'var(--t-gamma)',delta:'var(--t-delta)'};
+
+  /* header */
+  el('directive').textContent=D.directive;
+  const gh=(now-new Date(D.generated_at))/36e5, sy=el('synced');
+  sy.querySelector('span:last-child').textContent='SYNCED '+(ago(D.generated_at)||'—').toUpperCase()+
+    (D.live_fetched_at?' · SIG '+ago(D.live_fetched_at).toUpperCase():' · NO SIGNALS');
+  if(gh>72)sy.className='live bad'; else if(gh>24){sy.className='live warn';sy.querySelector('span:last-child').textContent+=' — SAY "HI CLIP"';}
+  const clock=el('clock');
+  function tick(){try{clock.textContent=new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',
+    weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date())+' IST';}
+    catch(e){clock.textContent=new Date().toUTCString().slice(0,22);}}
+  tick(); setInterval(tick,30000);
+
+  /* hero */
+  el('hero-action').textContent=D.hero.action;
+  el('hero-why').textContent=D.hero.why;
+  el('hero-queue').innerHTML=(D.hero.queue||[]).map(q=>'<div>'+esc(q)+'</div>').join('');
+
+  /* tabs */
+  const tabs=[].slice.call(document.querySelectorAll('.tab'));
+  function show(tab){tabs.forEach(t=>{const on=t===tab;t.setAttribute('aria-selected',on?'true':'false');
+    document.getElementById(t.getAttribute('aria-controls')).classList.toggle('active',on);});}
+  tabs.forEach((t,i)=>{t.addEventListener('click',()=>show(t));
+    t.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();
+      const n=(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length;tabs[n].focus();show(tabs[n]);}});});
+
+  /* pit wall — tower */
+  const gd=dd(D.warmup.end);
+  el('tower-body').innerHTML=D.lanes.map(l=>{
+    const interval = l.rank===1 ? '<b>'+esc(l.distance)+'</b>'
+      : (l.key==='beta' ? (gd>0?'+'+gd+' DAYS':'GREEN FLAG') : esc(l.distance));
+    const dim=l.tone==='bad';
+    return '<tr class="row'+(dim?' dimrow':'')+'" data-d="d-'+esc(l.key)+'" tabindex="0" aria-expanded="false">'+
+      '<td><span class="pos'+(l.rank===1?' p1':'')+'"><span>P'+l.rank+'</span></span></td>'+
+      '<td><div class="team"><span class="stripe" style="background:'+(LCOLOR[l.key]||'var(--ink-3)')+'"></span>'+
+      '<div><div class="tname">'+esc(l.name)+'</div><div class="tcrew">'+esc(l.crew)+'</div></div></div></td>'+
+      '<td><span class="chip '+esc(l.tone)+'">'+esc(l.status)+'</span></td>'+
+      '<td class="gap"'+(dim?' style="color:var(--ink-3)"':'')+'>'+interval+'</td>'+
+      '<td class="lap">'+esc(l.last)+'</td>'+
+      '<td class="lap"><b>'+esc(l.next)+'</b></td></tr>'+
+      '<tr class="detail" id="d-'+esc(l.key)+'"><td colspan="6"><div class="dwrap"><div class="dinner">'+
+      (l.detail||[]).map(d=>'<div><span class="dlabel">'+esc(d.label)+'</span>'+esc(d.text)+'</div>').join('')+
+      '</div></div></td></tr>';}).join('');
+  [].slice.call(document.querySelectorAll('tr.row')).forEach(r=>{
+    const tog=()=>{const d=document.getElementById(r.dataset.d);d.classList.toggle('open');
+      r.setAttribute('aria-expanded',d.classList.contains('open'));};
+    r.addEventListener('click',tog);
+    r.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tog();}});});
+
+  /* points strip */
+  const seasonTotal=D.revenue.months.reduce((a,m)=>a+m[1],0);
+  const liveLanes=D.lanes.filter(l=>l.tone!=='bad').length;
+  el('points').innerHTML=[
+    ['Season points (revenue YTD)','₹'+seasonTotal+'L','ALL FROM MAR · SAMPLE',''],
+    ['Dry spell',droughtMo(D.money.last_date)+' MO','SINCE LAST PODIUM','color:var(--bad)'],
+    ['Lanes live',liveLanes+' of '+D.lanes.length,'1 FROZEN · REST PARKED',''],
+    ['Regulation','FASTEST CASH','D50 · LOCKED','color:var(--fastest)']
+  ].map(p=>'<div class="pt"><div class="k">'+p[0]+'</div><div class="v num" style="'+p[3]+'">'+p[1]+' <small>'+p[2]+'</small></div></div>').join('');
+
+  /* race control = gates + notices */
+  el('racecontrol').innerHTML=D.gates.map(g=>{const d=dd(g.date);
+    const w=d<0?'PASSED':(d===0?'TODAY':P(g.date).toLocaleDateString('en-IN',{month:'short',day:'2-digit'}).toUpperCase());
+    return '<li><span class="rc-when'+(d<0?' dim':'')+'">'+w+'</span><span class="rc-msg"><b>'+esc(g.label)+'.</b> '+esc(g.note)+'</span></li>';}).join('')+
+    (D.notices||[]).map(n=>'<li><span class="rc-when dim">'+esc(n.when)+'</span><span class="rc-msg">'+n.text.replace(/</g,'&lt;')+'</span></li>').join('');
+
+  /* classification */
+  el('classif').innerHTML=D.dead_lanes.map(x=>'<li><span class="cl-tag '+esc(x.tag)+'">'+esc(x.tag)+'</span>'+
+    '<div><span class="cl-name">'+esc(x.name)+'</span> <span class="cl-why">— '+esc(x.ref)+'</span></div></li>').join('');
+
+  /* mission control — tiles from stats */
+  el('tiles').innerHTML=D.stats.map(s=>{
+    const v=sv(s);
+    const extra=s.kind==='warmup'?('<div class="bar"><i style="--w:'+
+      Math.min(100,Math.max(0,Math.round(100*((now-P(s.start))/(P(s.end)-P(s.start))))))+'%"></i></div>'):'';
+    return '<div class="tile '+esc(s.tone||'')+'"><div class="k">'+esc(s.k)+'</div><div class="v num">'+v+'</div>'+
+      extra+(s.sub?'<div class="s">'+esc(s.sub)+'</div>':'')+'</div>';}).join('');
+
+  /* gates cards */
+  el('gates').innerHTML=D.gates.map(g=>{const d=dd(g.date);
+    return '<div class="gate"><div class="d num" '+(d<=0?'style="color:var(--ok)"':'')+'>'+(d>0?'T-'+d:'GO')+
+    '<small>'+(d>0?'DAYS':'NOW')+'</small></div><div class="g-what"><b>'+esc(g.label)+'</b>'+esc(g.note)+'</div></div>';}).join('');
+
+  /* revenue chart */
+  el('rev-title').textContent=D.revenue.title;
+  const max=D.revenue.max||Math.max.apply(null,D.revenue.months.map(m=>m[1]))||1;
+  const chart=el('revchart'), labs=el('revlab'), tip=el('ctip');
+  D.revenue.months.forEach(m=>{
+    const b=document.createElement('div');b.className='cbar'+(m[1]>0?' hit':'');
+    const h=Math.max(2,Math.round(110*m[1]/max));
+    const f=document.createElement('div');f.className='fill';f.style.height=h+'px';
+    b.appendChild(f);
+    if(m[1]>0){const v=document.createElement('span');v.className='val';
+      v.textContent=D.revenue.unit+m[1]+D.revenue.suffix+' · '+D.revenue.note;
+      v.style.bottom=(h+6)+'px';v.style.transform='translateX(-50%)';b.appendChild(v);}
+    b.addEventListener('mousemove',e=>{const r=chart.getBoundingClientRect();
+      tip.style.left=(e.clientX-r.left)+'px';tip.style.top=(e.clientY-r.top)+'px';
+      tip.textContent=m[0]+' 2026 · '+D.revenue.unit+m[1]+D.revenue.suffix;tip.style.opacity=1;});
+    b.addEventListener('mouseleave',()=>{tip.style.opacity=0;});
+    chart.appendChild(b);
+    const x=document.createElement('span');x.textContent=m[0];labs.appendChild(x);
+  });
+
+  /* signals */
+  const inbox=D.signals.inbox||[];
+  el('inbox').innerHTML=inbox.length?inbox.map(m=>'<li><span class="sig-when">'+esc(m.age||'')+'</span>'+
+    '<span class="sig-b"><b>'+esc(m.from)+'</b> — '+esc(m.subject)+(m.unread?'<span class="pill">UNREAD</span>':'')+'</span></li>').join('')
+    :'<li class="empty">nothing from lane contacts in the window</li>';
+  const cal=D.signals.calendar||[];
+  el('calendar').innerHTML=cal.length?cal.map(c=>'<li><span class="sig-when">'+esc(c.when)+'</span><span class="sig-b">'+esc(c.what)+'</span></li>').join('')
+    :'<li class="empty">clear — nothing scheduled</li>';
+  el('activity').innerHTML=(D.activity||[]).map(a=>'<li><span class="sig-when">'+esc(a.when)+'</span><span class="sig-b">'+esc(a.what)+'</span></li>').join('')
+    ||'<li class="empty">no logged activity</li>';
+
+  /* systems + people */
+  const SL={on:'ON',ext:'EXTERNAL',off:'PARKED',err:'BROKEN'};
+  el('systems').innerHTML=D.systems.map(s=>'<tr><td class="sname">'+esc(s.name)+'</td>'+
+    '<td><span class="lamp '+esc(s.state)+'"><i></i>'+SL[s.state]+'</span></td><td class="snote">'+esc(s.note)+'</td></tr>').join('');
+  el('people').innerHTML=D.people.map(s=>'<tr><td class="sname">'+esc(s.name)+'</td>'+
+    '<td><span class="lamp '+esc(s.state)+'"><i></i>'+esc(s.label)+'</span></td><td class="snote">'+esc(s.note)+'</td></tr>').join('');
+
+  /* command deck */
+  const laneBorder=k=>k?('border-top:3px solid '+(LCOLOR[k]||'var(--line)')):'';
+  el('deck-active').innerHTML=D.deck.active.map(c=>'<div class="cmd" style="'+laneBorder(c.lane)+'">'+
+    '<div class="cname">'+esc(c.name)+'</div><div class="cdo">'+esc(c.does)+'</div>'+
+    '<div class="csay">say: <b>"'+esc(c.say)+'"</b></div></div>').join('');
+  el('deck-strategy').innerHTML=D.deck.strategy.map(c=>'<div class="cmd">'+
+    '<div class="cname">'+esc(c.name)+'</div><div class="cdo">'+esc(c.does)+'</div>'+
+    '<div class="csay">say: <b>"'+esc(c.say)+'"</b></div></div>').join('');
+  el('deck-parked').innerHTML=D.deck.parked.map(c=>'<div class="cmd parked">'+
+    '<div class="cname">'+esc(c.name)+'</div><div class="cdo">'+esc(c.does)+'</div>'+
+    '<div class="csay">'+esc(c.note)+'</div></div>').join('');
+
+  el('foot').innerHTML='<span>SOURCE: CLIP DATA LAYER + DECISIONS D45–D50</span>'+
+    '<span>REGENERATED ON EVERY "HI CLIP"</span><span>REGULATION: FASTEST CASH</span>';
+})();
+</script>
+</body>
+</html>

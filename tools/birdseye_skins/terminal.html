@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>birdseye — acme</title>
+<style>
+  :root{
+    --bg:#0C0F12; --ink:#C6CFD6; --dim:#7D8791; --faint:#49535D; --edge:#232A32;
+    --ok:#57C08A; --warn:#D9B23F; --bad:#E06C5F; --hi:#F2F6F9;
+  }
+  *{box-sizing:border-box}
+  html{background:var(--bg)}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:12.5px/1.55 ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+  .page{max-width:980px;margin:0 auto;padding:22px 18px 60px}
+  .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+  .dim{color:var(--dim)} .faint{color:var(--faint)} .hi{color:var(--hi);font-weight:700}
+
+  .bar0{display:flex;flex-wrap:wrap;gap:4px 18px;padding:6px 10px;border:1px solid var(--edge);
+    background:#10141A;margin-bottom:14px;font-size:11.5px}
+  .bar0 .r{margin-left:auto}
+
+  section{border:1px solid var(--edge);margin-top:14px;position:relative;padding:12px 14px 12px}
+  section>h2{position:absolute;top:-9px;left:10px;margin:0;background:var(--bg);padding:0 8px;
+    font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--dim);text-transform:uppercase}
+
+  .hero-act{font-size:15.5px;color:var(--hi);font-weight:700;line-height:1.45}
+  .hero-act::before{content:"> ";color:var(--ok)}
+  .hero-why{color:var(--dim);margin-top:6px;font-size:12px}
+  .q{color:var(--dim);font-size:12px;margin-top:2px}
+  .q::before{content:"  then: ";color:var(--faint)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:0}
+  @media (max-width:760px){.grid2{grid-template-columns:1fr}}
+  .grid2 section{margin-top:14px}
+
+  .tbl-wrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:600px}
+  @media (max-width:640px){ul[style*="columns"]{columns:1 !important}}
+  td,th{padding:3px 10px 3px 0;vertical-align:top;text-align:left;font-weight:400}
+  th{color:var(--faint);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;border-bottom:1px solid var(--edge);padding-bottom:5px}
+  tr.sep td{border-top:1px dashed var(--edge)}
+  .tag{font-weight:700}
+  .statline{display:flex;flex-wrap:wrap;gap:2px 26px}
+  .statline .s{min-width:130px;padding:3px 0}
+  .statline .k{color:var(--faint);font-size:10.5px;letter-spacing:.12em}
+  .statline .v{font-size:15px;font-weight:700;color:var(--hi)}
+  .statline .sub{color:var(--faint);font-size:10.5px}
+  .charbar{letter-spacing:.05em}
+  ul{margin:0;padding:0;list-style:none}
+  li{padding:2px 0}
+  .when{color:var(--faint);display:inline-block;min-width:64px}
+  .u{color:var(--warn);font-weight:700}
+  .cmdrow{display:flex;flex-wrap:wrap;gap:3px 20px;font-size:11.5px}
+  .cmdrow span i{font-style:normal;color:var(--faint)}
+  footer{margin-top:16px;color:var(--faint);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
+  .empty{color:var(--faint);font-style:italic}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="bar0">
+    <span class="hi">ACME::BIRDSEYE</span>
+    <span class="dim" id="directive"></span>
+    <span class="r" id="stamp"></span>
+  </div>
+
+  <section><h2>the one thing</h2>
+    <div class="hero-act" id="hero-act"></div>
+    <div class="hero-why" id="hero-why"></div>
+    <div id="queue"></div>
+  </section>
+
+  <section><h2>pulse</h2><div class="statline" id="pulse"></div></section>
+
+  <section><h2>lanes · ranked by distance to cash</h2>
+    <div class="tbl-wrap"><table id="lanes"><thead><tr>
+      <th>#</th><th>lane</th><th>status</th><th>distance</th><th>next</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div style="margin-top:8px;font-size:11px" class="faint" id="dead"></div>
+  </section>
+
+  <div class="grid2">
+    <section><h2>signals</h2>
+      <div class="faint" style="font-size:10.5px;letter-spacing:.14em">INBOX / LANE CONTACTS</div>
+      <ul id="inbox"></ul>
+      <div class="faint" style="font-size:10.5px;letter-spacing:.14em;margin-top:10px">CALENDAR / TODAY+TOMORROW</div>
+      <ul id="calendar"></ul>
+    </section>
+    <section><h2>gates</h2><ul id="gates"></ul>
+      <div class="faint" style="font-size:10.5px;letter-spacing:.14em;margin-top:12px">MONEY</div>
+      <div id="money" style="font-size:12px"></div>
+    </section>
+  </div>
+
+  <section><h2>log · since you last looked</h2><ul id="activity"></ul></section>
+
+  <section><h2>machine + commands</h2>
+    <ul id="systems" style="columns:2;column-gap:34px"></ul>
+    <div class="cmdrow" id="cmds" style="margin-top:10px;border-top:1px dashed var(--edge);padding-top:8px"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const DATA=/*__DATA__*/{};
+(function(){
+  const D=DATA, now=new Date();
+  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const P=d=>new Date(d+'T00:00:00+05:30');
+  const dd=d=>Math.ceil((P(d)-now)/864e5);
+  const drought=d=>{const a=P(d);let m=(now.getFullYear()-a.getFullYear())*12+now.getMonth()-a.getMonth();if(now.getDate()<a.getDate())m--;return Math.max(0,m)+'mo';};
+  const chbar=(f,t)=>{const n=10,x=Math.max(0,Math.min(n,Math.round(n*f/t)));return '█'.repeat(x)+'░'.repeat(n-x);};
+  const warm=(s,e)=>{const t=Math.round((P(e)-P(s))/864e5),n=Math.round((now-P(s))/864e5);
+    return n>=t?'DONE':(n<0?'T-'+(-n)+'d':chbar(n,t)+' d'+n+'/'+t);};
+  const tminus=g=>{const f=g.map(dd).filter(x=>x>=0).sort((a,b)=>a-b)[0];return f==null?'—':(f===0?'TODAY':'T-'+f+'d');};
+  const sv=s=>s.kind==='drought'?drought(s.date):s.kind==='tminus'?tminus(s.gates):s.kind==='warmup'?warm(s.start,s.end):s.v;
+  const ago=iso=>{if(!iso)return null;const h=(now-new Date(iso))/36e5;return h<1?'now':h<48?Math.round(h)+'h':Math.round(h/24)+'d';};
+  const el=id=>document.getElementById(id);
+  const TAG={ok:'[OK]',warn:'[..]',bad:'[!!]'};
+  const CL={ok:'ok',warn:'warn',bad:'bad',info:''};
+
+  el('directive').textContent=D.directive;
+  const gh=(now-new Date(D.generated_at))/36e5;
+  el('stamp').innerHTML='sync '+ago(D.generated_at)+(gh>24?' <span class="'+(gh>72?'bad':'warn')+'">STALE</span>':'')+
+    ' · sig '+(D.live_fetched_at?ago(D.live_fetched_at):'<span class="faint">none</span>');
+
+  el('hero-act').textContent=D.hero.action;
+  el('hero-why').textContent='# '+D.hero.why;
+  el('queue').innerHTML=(D.hero.queue||[]).map(q=>'<div class="q">'+esc(q)+'</div>').join('');
+
+  el('pulse').innerHTML=D.stats.map(s=>'<div class="s"><div class="k">'+esc(s.k)+'</div>'+
+    '<div class="v '+(CL[s.tone]||'')+' charbar">'+esc(sv(s))+'</div>'+
+    (s.sub?'<div class="sub">'+esc(s.sub)+'</div>':'')+'</div>').join('');
+
+  el('lanes').querySelector('tbody').innerHTML=D.lanes.map(l=>'<tr class="sep">'+
+    '<td class="faint">'+l.rank+'</td>'+
+    '<td><span class="hi">'+esc(l.name)+'</span><br><span class="faint">'+esc(l.crew)+'</span></td>'+
+    '<td><span class="tag '+CL[l.tone]+'">'+TAG[l.tone]+'</span> '+esc(l.status)+'</td>'+
+    '<td class="dim">'+esc(l.distance)+'</td>'+
+    '<td class="dim">'+esc(l.next)+(l.blocker?'<br><span class="faint">blocked: '+esc(l.blocker)+'</span>':'')+'</td></tr>').join('');
+  el('dead').textContent='dead/parked: '+D.dead_lanes.map(x=>x.name+' ('+x.ref+')').join(' · ');
+
+  const inbox=D.signals.inbox||[];
+  el('inbox').innerHTML=inbox.length?inbox.map(m=>'<li><span class="when">'+esc(m.age||'')+'</span>'+
+    (m.unread?'<span class="u">*</span> ':'')+'<span class="hi">'+esc(m.from)+'</span> <span class="dim">— '+esc(m.subject)+'</span></li>').join('')
+    :'<li class="empty">no signal in window</li>';
+  const cal=D.signals.calendar||[];
+  el('calendar').innerHTML=cal.length?cal.map(c=>'<li><span class="when">'+esc(c.when)+'</span>'+esc(c.what)+'</li>').join('')
+    :'<li class="empty">clear</li>';
+
+  el('gates').innerHTML=D.gates.map(g=>{const d=dd(g.date);
+    return '<li><span class="'+(d<0?'faint':'warn')+'" style="display:inline-block;min-width:64px;font-weight:700">'+
+    (d<0?'passed':(d===0?'TODAY':'T-'+d+'d'))+'</span><span class="hi">'+esc(g.label)+'</span>'+
+    '<br><span class="faint" style="margin-left:64px">'+esc(g.note)+'</span></li>';}).join('');
+  el('money').innerHTML='<span class="dim">last-in:</span> '+esc(D.money.last)+'<br><span class="dim">burn:</span> '+esc(D.money.burn);
+
+  el('activity').innerHTML=(D.activity||[]).map(a=>'<li><span class="when">'+esc(a.when)+'</span><span class="dim">'+esc(a.what)+'</span></li>').join('')||'<li class="empty">no log</li>';
+
+  const LST={on:['[ON]','ok'],ext:['[EXT]','warn'],off:['[--]','faint'],err:['[XX]','bad']};
+  el('systems').innerHTML=D.systems.map(s=>{const t=LST[s.state]||LST.off;
+    return '<li><span class="'+t[1]+'" style="font-weight:700">'+t[0]+'</span> '+esc(s.name)+' <span class="faint">'+esc(s.note)+'</span></li>';}).join('');
+  el('cmds').innerHTML=D.commands.map(c=>'<span>"'+esc(c.say)+'" <i>→ '+esc(c.does)+'</i></span>').join('');
+  el('foot').textContent='clip · regenerated on every "hi clip" · data layer + d45-d50';
+})();
+</script>
+</body>
+</html>
